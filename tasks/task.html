@@ -16,12 +16,14 @@
     <script> <!--TODO convert other (not only level) url arguments to the task settings-->
         var query = location.search.substr(1).trim().split('&');
         var level = 0;
-        // console.log(query);
+        var language = "ru";
         for (var i = 0; i < query.length; i++) {
             if (query[i] === "level=1")
                 level = 1;
             else if (query[i] === "level=2")
                 level = 2;
+            else if (query[i] === "language=en")
+                language = "en";
         }
 
         console.log('level', level);
@@ -30,7 +32,7 @@
             kio_api.initializeKioProblem(
                 [TASKNAME].[TASKNAME|CAPITALIZE],
                 document.getElementById('problem'),
-                {level: level}
+                {level: level, language: language}
             );
         });
     </script>

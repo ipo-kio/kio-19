@@ -10,10 +10,13 @@ import { Sveto } from './Classes/Sveto.js'
 import { Solution } from './Classes/Solution.js'
 import { SvetoHelper } from './Classes/SvetoHelper.js'
 import { Slider } from './Classes/slider.js'
+import { LOCALIZATION } from "./localization";
 
 var _thisProblem
 
 export class Trafficlights {
+    static LOCALIZATION = LOCALIZATION
+
   _currentSolution
   _levelSettings
   CANVAS_DOP_W = 110
@@ -246,33 +249,35 @@ export class Trafficlights {
         ];
         */
 
+      if (!this.message)
+          this.message = s => s;
     
       let _isTrackFull = {
         name: '_isTrackFull',
-        title: 'Маршрут закончен:',
+        title: this.message('Маршрут закончен:'),
         ordering: 'maximize',
         view: function (ok) {
           if (ok) {
-            return 'ДА!'
+            return this.message('ДА!')
           } else {
-            return 'Нет'
+            return this.message('Нет')
           }
         }
       }
       let _pointCount = {
         name: '_pointCount',
-        title: 'Пройдено достопримечательностей:',
+        title: this.message('Пройдено достопримечательностей:'),
         ordering: 'maximize'
       }
       let _roadCount = {
         name: '_roadCount',
-        title: 'Пройденный путь:',
+        title: this.message('Пройденный путь:'),
         ordering: 'minimize'
       }
 
       let _tikCount = {
         name: '_tikCount',
-        title: 'Время в пути:',
+        title: this.message('Время в пути:'),
         ordering: 'minimize'
       }
 
@@ -394,7 +399,7 @@ export class Trafficlights {
     btn = document.createElement('button')
     btn.innerHTML = '&#171;' // <<
     btn.id = 'go_btn1'
-    btn.title = 'В начало'
+    btn.title = this.message('В начало')
     btn.className = 'go_btn1'
     btn.addEventListener('click', function (evt) {
       _thisProblem.goToStart()
@@ -403,7 +408,7 @@ export class Trafficlights {
 
     btn = document.createElement('button')
     btn.innerHTML = '&#8250;' // >
-    btn.title = 'Поехали'
+    btn.title = this.message('Поехали')
     btn.id = 'go_btn_continue'
     btn.className = 'go_btn1'
     btn.addEventListener('click', function (evt) {
@@ -414,7 +419,7 @@ export class Trafficlights {
     btn = document.createElement('button')
     btn.innerHTML = '&#108;&#108;' // -- ||&#8214;
     btn.id = 'go_btn_pause'
-    btn.title = 'Пауза'
+    btn.title = this.message('Пауза')
     btn.style.fontSize = '16px'
     btn.style.paddingTop = '5px'
     btn.className = 'go_btn1'
@@ -426,7 +431,7 @@ export class Trafficlights {
     btn = document.createElement('button')
     btn.innerHTML = '&#187;' // >>
     btn.id = 'go_btn4'
-    btn.title = 'В конец'
+    btn.title = this.message('В конец')
     btn.className = 'go_btn1'
     btn.addEventListener('click', function (evt) {
       _thisProblem.goToEnd()
@@ -436,7 +441,7 @@ export class Trafficlights {
     btn = document.createElement('button')
     btn.innerHTML = '&#8722;'; //'&#8678;'
     btn.id = 'go_btn_plus'
-    btn.title = 'Шаг назад'
+    btn.title = this.message('Шаг назад')
     btn.className = 'go_btn1'
     btn.style.marginLeft = '20px'
     btn.addEventListener('click', function (evt) {
@@ -453,7 +458,7 @@ export class Trafficlights {
     btn = document.createElement('button')
     btn.innerHTML = '&#43;';//'&#8680;'
     btn.id = 'go_btn_plus'
-    btn.title = 'Шаг вперед'
+    btn.title = this.message('Шаг вперед')
     btn.className = 'go_btn1'
     btn.addEventListener('click', function (evt) {
       _thisProblem.goStepPlus(true)
