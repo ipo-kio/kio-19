@@ -248,36 +248,36 @@ export class Trafficlights {
             //TODO добавить список параметров
         ];
         */
-
       if (!this.message)
           this.message = s => s;
+      let message = this.message
     
       let _isTrackFull = {
         name: '_isTrackFull',
-        title: this.message('Маршрут закончен:'),
+        title: message('Маршрут закончен:'),
         ordering: 'maximize',
         view: function (ok) {
           if (ok) {
-            return this.message('ДА!')
+            return message('ДА!')
           } else {
-            return this.message('Нет')
+            return message('Нет')
           }
         }
       }
       let _pointCount = {
         name: '_pointCount',
-        title: this.message('Пройдено достопримечательностей:'),
+        title: message('Пройдено достопримечательностей:'),
         ordering: 'maximize'
       }
       let _roadCount = {
         name: '_roadCount',
-        title: this.message('Пройденный путь:'),
+        title: message('Пройденный путь:'),
         ordering: 'minimize'
       }
 
       let _tikCount = {
         name: '_tikCount',
-        title: this.message('Время в пути:'),
+        title: message('Время в пути:'),
         ordering: 'minimize'
       }
 
