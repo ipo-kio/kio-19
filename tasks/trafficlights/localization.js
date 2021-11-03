@@ -9,7 +9,7 @@ export const LOCALIZATION = {
         'В начало': 'To start',
         'Поехали': 'Go',
         'Пауза': 'Pause',
-        'В конец': 'To the end',
+        'В конец': 'To end',
         'Шаг назад': 'Step back',
         'Шаг вперед': 'Step forward'
     }
