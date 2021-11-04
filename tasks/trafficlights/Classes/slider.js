@@ -1,4 +1,4 @@
-if (!window)
+if (typeof window === 'undefined')
     window = {};
 
 export class Slider {
