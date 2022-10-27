@@ -1,74 +1,97 @@
 'use strict';
 
-const webpack = require('webpack');
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const merge = require('deepmerge');
+const merge = require('webpack-merge');
 const path = require('path');
 const fs = require('fs');
 
 const sourceFolders = [
-    path.join(__dirname, 'tasks')
+    path.join(__dirname, 'tasks'),
+    path.join(__dirname, 'node_modules')
 ];
 
-//envirnoment env.mode = 'prod'|'dev'
-
 module.exports = function (env) {
+    let production = env && env.mode === 'production';
+
+    let dist_folder = production ? 'dist-prod' : 'dist';
+
     let config = {
         entry: {
             //added for all tasks in tasks folder
             //'taskname': 'taskname/taskname.js',
         },
         output: {
-            path: path.join(__dirname, '/dist'),
+            path: path.join(__dirname, dist_folder),
             filename: '[name].js',
-            library: '[name]'
+            library: '[name]',
+            // https://github.com/webpack/webpack/issues/1194#issuecomment-565960948
+            devtoolNamespace: 'devtool_namespace'
         },
         resolve: {
-            modules: sourceFolders
+            modules: sourceFolders,
+            extensions: ['.js', '.ts']
         },
         module: {
             rules: [
                 {
                     test: /\.js$/,
-                    loader: 'babel-loader', //Why loader instead of use?
+                    exclude: /node_modules/,
                     include: sourceFolders,
-                    options: {
-                        presets: [
-                            ['env', {"modules": false}], //this is 'env' preset with options
-                        ],
-                        plugins: [
-                            "transform-object-rest-spread",
-                            "transform-class-properties",
-                            "transform-export-default"
-                        ]
+                    use: {
+                        loader: 'babel-loader',
+                        options: {
+                            "presets": [
+                                ["@babel/preset-env", {
+                                    "useBuiltIns": "usage",
+                                    "targets": {
+                                        "ie": "11"
+                                    },
+                                    "corejs": 3
+                                }]
+                            ],
+                            "plugins": [
+                                "@babel/plugin-transform-arrow-functions",
+                                "@babel/plugin-syntax-dynamic-import",
+                                "@babel/plugin-proposal-class-properties",
+                                "@babel/plugin-proposal-export-namespace-from",
+                                "@babel/plugin-proposal-throw-expressions",
+                                "@babel/plugin-proposal-export-default-from"
+                            ]
+                        }
                     }
                 },
                 {
                     test: /\.scss$/,
-                    include: sourceFolders,
-                    use: ExtractTextPlugin.extract({
-                        fallback: "style-loader",
-                        use: [{
-                            loader: "css-loader",
+                    use: [
+                        MiniCssExtractPlugin.loader, //TODO remove empty main (with javascript)
+                        {
+                            loader: 'css-loader',
                             options: {
-                                url: false
+                                "url": false
                             }
-                        }, "sass-loader"]
-                    })
-                }
+                        },
+                        'sass-loader'
+                    ],
+                },
+                {
+                    test: /\.ts$/,
+                    // use: ['babel-loader', 'ts-loader'],
+                    use: 'ts-loader',
+                    exclude: /node_modules/
+                },
             ]
         },
         plugins: [
-            new ExtractTextPlugin("[name].css"),
-            // added for all tasks in tasks folder:
-            // new CopyWebpackPlugin([
-            //     {from: './tasks/taskname/img/*', to: './taskname-resources', flatten: true},
-            // ])
+            new MiniCssExtractPlugin({
+                filename: "[name].css",
+            })
         ]
     };
 
     let debugConfig = {
+        mode: 'development',
         devtool: 'source-map',
         output: {
             pathinfo: true
@@ -76,35 +99,40 @@ module.exports = function (env) {
     };
 
     let productionConfig = {
-        plugins: [
-            new webpack.optimize.UglifyJsPlugin({
-                comments: false
-            })
-        ]
+        mode: "production",
+        optimization: {
+            minimize: true,
+            minimizer: [
+                `...`,
+                new CssMinimizerPlugin()
+            ],
+        }
     };
 
-    let arrayMerge = function (destArray, sourceArray, options) {
-        return destArray.concat(sourceArray);
-    };
+    find_all_tasks_and_add_to_config(config, dist_folder);
 
-    find_all_tasks_and_add_to_config(config);
+    if (production)
+        config = merge.merge(config, productionConfig);
+    else
+        config = merge.merge(config, debugConfig);
 
-    if (env && env.mode === 'prod') {
-        return merge(config, productionConfig, {arrayMerge: arrayMerge});
-    } else
-        return merge(config, debugConfig, {arrayMerge: arrayMerge});
+    console.log("config is: ", config);
+    return config;
 };
 
-function find_all_tasks_and_add_to_config(config) {
+function find_all_tasks_and_add_to_config(config, dist_folder) {
     config.entry = {};
 
+            //-- peter
     let task_html_template = fs.readFileSync('./tasks/task.html', {encoding: "utf8"});
+    // --let task_html_template = fs.readFileSync('./tasks/task-brilliant.html', {encoding: "utf8"});
+    // let task_html_template = fs.readFileSync('./tasks/task-epidemic.html', {encoding: "utf8"});
 
-    if (!fs.existsSync('./dist'))
-        fs.mkdirSync('./dist');
+    if (!fs.existsSync(dist_folder))
+        fs.mkdirSync(dist_folder);
 
     fs.readdirSync('./tasks').forEach(file => {
-        add_task_to_config(file, config, task_html_template);
+        add_task_to_config(file, config, task_html_template, dist_folder);
     });
 }
 
@@ -119,24 +147,38 @@ function process_html_template(task_html_template, task_name) {
     task_html_template = replace_all(task_html_template, 'TASKNAME', task_name);
     task_html_template = replace_all(task_html_template, 'TASKNAME\\|CAPITALIZE', capitalized_task_name);
 
+    task_html_template = replace_all(task_html_template, 'XXX', (new Date()).getTime()); //-- peter
+
     return task_html_template;
 }
 
-function add_task_to_config(task_name, config, task_html_template) {
+function add_task_to_config(task_name, config, task_html_template, dist_folder) {
     if (task_name.indexOf('.') >= 0) // skip non directories
         return;
 
+    //-- peter
+    //if (task_name != 'brilliant') return;        
+    // if (task_name != 'epidemic') return;
+
     //add entries
-    config.entry[task_name] = task_name + '/' + task_name + '.js';
+    let task_file_js = path.join(task_name, task_name + '.js');
+    let task_file_ts = path.join(task_name, task_name + '.ts');
+    config.entry[task_name] = fs.existsSync('tasks/' + task_file_ts) ? task_file_ts : task_file_js;
 
     //copy html
     let output_html = process_html_template(task_html_template, task_name);
-    fs.writeFileSync('./dist/' + task_name + '.html', output_html, {encoding: "utf8"});
+    fs.writeFileSync(path.join(dist_folder, task_name + '.html'), output_html, {encoding: "utf8"});
 
     //copy assets
     config.plugins.push(
-        new CopyWebpackPlugin([
-            {from: './tasks/' + task_name + '/res/*', to: './' + task_name + '-resources', flatten: true},
-        ])
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: '*',
+                    to: './' + task_name + '-resources',
+                    context: path.resolve(__dirname, 'tasks', task_name, 'res')
+                },
+            ]
+        })
     );
 }
