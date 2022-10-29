@@ -1,10 +1,12 @@
 import './conveyor.scss';
-import {Experiments} from "./experiments";
 import {Belt, DIST_MOVE} from "./domain/belt";
 import {Mouse} from "./mouse";
 import {Slider} from "./slider";
+import {LOCALIZATION} from "./localization"
 
 export class Conveyor {
+
+    static LOCALIZATION = LOCALIZATION;
 
     time_goes = false;
     mouse;
@@ -25,32 +27,6 @@ export class Conveyor {
      */
     constructor(settings) {
         this.level = settings.level;
-
-        /*console.log('--------');
-        new Experiments(4, [1, 1, 2, 2]);
-        new Experiments([1, 1, 2, 3, 4, 5, 6, 7, 8, 9], true);
-        new Experiments([1, 1, 2, 3, 4, 5, 6, 7, 8, 9], false);
-
-        new Experiments([1, 2, 1, 3, 1, 4, 1, 5, 1, 6], true);
-        new Experiments([1, 2, 1, 3, 1, 4, 1, 5, 1, 6], false);
-        new Experiments([1, 2, 1, 2, 1, 2, 1, 2, 1, 3], true);
-        new Experiments([1, 2, 1, 2, 1, 2, 1, 2, 1, 3], false);
-        new Experiments([1, 3, 3, 1, 2, 4, 1, 1], true);
-        new Experiments([1, 3, 3, 1, 2, 4, 1, 1], false);*/
-        //
-
-        /*for (let i = 1; i <= 20; i++) {
-            console.log('-----------------------------------');
-            let rays = [];
-            let t = 3;
-            for (let j = 0; j < 10; j++)
-                rays.push(Math.floor(t * Math.random() + 1));
-
-            let e1 = new Experiments(rays, false);
-            let e2 = new Experiments(rays, true);
-
-            console.log(e1.length, e2.length, rays);
-        }*/
     }
 
     /**
@@ -224,12 +200,15 @@ export class Conveyor {
 
         switch (this.level) {
             case 0:
+            case '0':
                 initial_rays = [1, 3, 1, 1, 3, 2];
                 break;
             case 1:
+            case '1':
                 initial_rays = [1, 2, 2, 3, 1, 2, 1, 1];
                 break;
             case 2:
+            case '2':
                 initial_rays = [1, 2, 3, 1, 1, 2, 1, 1, 1, 1];
                 break;
         }
@@ -321,15 +300,19 @@ export class Conveyor {
     }
 
     parameters() {
+        if (!this.message)
+            this.message = function(s) {return s}
+        let message = this.message;
+
         return [
             {
                 name: 'd',
-                title: 'Различных поворотов',
+                title: message('Различных поворотов'),
                 ordering: 'minimize'
             },
             {
                 name: 'n',
-                title: 'Длина программы',
+                title: message('Длина программы'),
                 ordering: 'minimize'
             }
         ];

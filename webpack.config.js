@@ -3,7 +3,7 @@
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const path = require('path');
 const fs = require('fs');
 
@@ -57,7 +57,8 @@ module.exports = function (env) {
                                 "@babel/plugin-proposal-class-properties",
                                 "@babel/plugin-proposal-export-namespace-from",
                                 "@babel/plugin-proposal-throw-expressions",
-                                "@babel/plugin-proposal-export-default-from"
+                                "@babel/plugin-proposal-export-default-from",
+                                "@babel/plugin-proposal-object-rest-spread"
                             ]
                         }
                     }
@@ -77,7 +78,6 @@ module.exports = function (env) {
                 },
                 {
                     test: /\.ts$/,
-                    // use: ['babel-loader', 'ts-loader'],
                     use: 'ts-loader',
                     exclude: /node_modules/
                 },
@@ -112,9 +112,9 @@ module.exports = function (env) {
     find_all_tasks_and_add_to_config(config, dist_folder);
 
     if (production)
-        config = merge.merge(config, productionConfig);
+        config = merge(config, productionConfig);
     else
-        config = merge.merge(config, debugConfig);
+        config = merge(config, debugConfig);
 
     console.log("config is: ", config);
     return config;
@@ -123,10 +123,7 @@ module.exports = function (env) {
 function find_all_tasks_and_add_to_config(config, dist_folder) {
     config.entry = {};
 
-            //-- peter
     let task_html_template = fs.readFileSync('./tasks/task.html', {encoding: "utf8"});
-    // --let task_html_template = fs.readFileSync('./tasks/task-brilliant.html', {encoding: "utf8"});
-    // let task_html_template = fs.readFileSync('./tasks/task-epidemic.html', {encoding: "utf8"});
 
     if (!fs.existsSync(dist_folder))
         fs.mkdirSync(dist_folder);
@@ -152,31 +149,37 @@ function process_html_template(task_html_template, task_name) {
     return task_html_template;
 }
 
+//TODO use copy plugin with transformer parameter
 function add_task_to_config(task_name, config, task_html_template, dist_folder) {
     if (task_name.indexOf('.') >= 0) // skip non directories
         return;
-
-    //-- peter
-    //if (task_name != 'brilliant') return;        
-    // if (task_name != 'epidemic') return;
 
     //add entries
     let task_file_js = path.join(task_name, task_name + '.js');
     let task_file_ts = path.join(task_name, task_name + '.ts');
     config.entry[task_name] = fs.existsSync('tasks/' + task_file_ts) ? task_file_ts : task_file_js;
 
+    let task_file_parameters_js = path.join(task_name, task_name + '_parameters.js');
+    let task_file_parameters_ts = path.join(task_name, task_name + '_parameters.ts');
+    if (fs.existsSync('tasks/' + task_file_parameters_js))
+        config.entry[task_name + '_parameters'] = task_file_parameters_js;
+    else if (fs.existsSync('tasks/' + task_file_parameters_ts))
+        config.entry[task_name + '_parameters'] = task_file_parameters_ts;
+
     //copy html
     let output_html = process_html_template(task_html_template, task_name);
     fs.writeFileSync(path.join(dist_folder, task_name + '.html'), output_html, {encoding: "utf8"});
 
     //copy assets
+    let resources_folder_name = task_name + '-resources';
     config.plugins.push(
         new CopyWebpackPlugin({
             patterns: [
                 {
                     from: '*',
-                    to: './' + task_name + '-resources',
-                    context: path.resolve(__dirname, 'tasks', task_name, 'res')
+                    to: './' + resources_folder_name,
+                    context: path.resolve(__dirname, 'tasks', task_name, resources_folder_name),
+                    noErrorOnMissing: true
                 },
             ]
         })
