@@ -140,6 +140,8 @@ export class Conveyor {
     }
 
     _init_time_controls(domNode, preferred_width) {
+        let message = this.message;
+
         let time_controls_container = document.createElement('div');
         time_controls_container.className = 'time-controls-container';
         domNode.appendChild(time_controls_container);
@@ -159,19 +161,19 @@ export class Conveyor {
 
         this._start_play = () => {
             this.time_goes = true;
-            $('#slider-control-play').text('Остановить');
+            $('#slider-control-play').text(message('Остановить'));
         };
 
         this._stop_play = () => {
             this.time_goes = false;
-            $('#slider-control-play').text('Запустить');
+            $('#slider-control-play').text(message('Запустить'));
         };
 
-        add_button('В начало', 'slider-control-0', () => this._slider.value = 0);
-        add_button('-1', 'slider-control-p1', () => this._slider.value--);
-        add_button('+1', 'slider-control-m1', () => this._slider.value++);
-        add_button('В конец', 'slider-control-max', () => this._slider.value = this._slider.max_value);
-        add_button('Запустить', 'slider-control-play', () => {
+        add_button(message('В начало'), 'slider-control-0', () => this._slider.value = 0);
+        add_button(message('-1'), 'slider-control-p1', () => this._slider.value--);
+        add_button(message('+1'), 'slider-control-m1', () => this._slider.value++);
+        add_button(message('В конец'), 'slider-control-max', () => this._slider.value = this._slider.max_value);
+        add_button(message('Запустить'), 'slider-control-play', () => {
             if (!this.time_goes)
                 this._start_play();
             else
